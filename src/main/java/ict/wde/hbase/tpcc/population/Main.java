@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
 
@@ -14,22 +16,25 @@ public class Main {
 
   static List<DataPopulation> tables = new ArrayList<DataPopulation>();
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     String zkAddr = args[0];
     String tabChars = args[1];
     Configuration config = new Configuration();
     config.set(DominoConst.ZK_PROP, zkAddr);
-    // tables = new DataPopulation[] { new ItemPop(conn), new
-    // WarehousePop(conn),
-    // new StockPop(conn), new DistrictPop(conn), new CustomerPop(conn),
-    // new OrderPop(conn) };
-    initTablePopulation(tabChars, config);
-    for (DataPopulation table : tables) {
-      table.startPopSync();
+    try {
+      initTablePopulation(tabChars, config);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    ExecutorService es = Executors.newCachedThreadPool();
+    try {
+      es.invokeAll(tables);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
     }
   }
 
-  private static void initTablePopulation(String chars, Configuration config) {
+  private static void initTablePopulation(String chars, Configuration config) throws IOException {
     Set<Character> hash = new HashSet<Character>();
     for (char c : chars.toCharArray()) {
       if (hash.contains(c)) continue;

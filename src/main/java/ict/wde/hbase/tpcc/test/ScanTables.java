@@ -7,11 +7,16 @@ import ict.wde.hbase.tpcc.table.Warehouse;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+
+import static org.apache.log4j.Logger.*;
 
 public class ScanTables {
   public static void main(String[] args) throws Exception {
 
-    HBaseConnection conn = new DominoDriver().getConnection("p18:2181");
+//    getRootLogger().setLevel(Level.WARN);
+    HBaseConnection conn = new DominoDriver().getConnection("nobida143:2181");
     conn.startTransaction();
 
     ResultScanner rs = conn.scan(new Scan(), Warehouse.TABLE);
