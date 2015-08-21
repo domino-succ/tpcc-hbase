@@ -8,6 +8,8 @@ import ict.wde.hbase.tpcc.table.Warehouse;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -16,14 +18,18 @@ public class DistrictPop extends DataPopulation {
   static final int POP_TOTAL_ID = 10;
   private int wid = POP_W_FROM;
   private int did = 0;
+  private HTableInterface dtable;
 
-  public DistrictPop(Configuration connection) {
-    super(connection);
+  public DistrictPop(Configuration conf) throws IOException {
+    dtable = new HTable(conf, District.TABLE);
   }
 
   @Override
   public int popOneRow() throws IOException {
-    if (wid > POP_W_TO && did >= POP_TOTAL_ID) return 0;
+    if (wid > POP_W_TO && did >= POP_TOTAL_ID) {
+      dtable.close();
+      return 0;
+    }
 
     byte[] w_id = Warehouse.toRowkey(wid);
     byte[] d_id = District.toDid(did);
@@ -40,7 +46,7 @@ public class DistrictPop extends DataPopulation {
     put.add(Const.NUMERIC_FAMILY, District.D_YTD, YTD0);
     put.add(Const.NUMERIC_FAMILY, District.D_NEXT_O_ID, NEXT_O_ID0);
 
-    put(put, District.TABLE);
+    put(put, dtable);
 
     ++did;
     if (did >= POP_TOTAL_ID) {

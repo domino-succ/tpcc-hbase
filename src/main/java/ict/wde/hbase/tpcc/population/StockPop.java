@@ -9,6 +9,8 @@ import ict.wde.hbase.tpcc.table.Warehouse;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -17,14 +19,18 @@ public class StockPop extends DataPopulation {
   static final long POP_TOTAL_ID = ItemPop.POP_TOTAL_ID;
   private int wid = POP_W_FROM;
   private int iid = 0;
+  private HTableInterface stable;
 
-  public StockPop(Configuration connection) {
-    super(connection);
+  public StockPop(Configuration conf) throws IOException {
+    stable = new HTable(conf, Stock.TABLE);
   }
 
   @Override
   public int popOneRow() throws IOException {
-    if (wid > POP_W_TO && iid >= POP_TOTAL_ID) return 0;
+    if (wid > POP_W_TO && iid >= POP_TOTAL_ID) {
+      stable.close();
+      return 0;
+    }
     byte[] w_id = Warehouse.toRowkey(wid);
     byte[] i_id = Item.toRowkey(iid);
     Put put = new Put(Stock.toRowkey(w_id, i_id));
@@ -39,7 +45,7 @@ public class StockPop extends DataPopulation {
     put.add(Const.NUMERIC_FAMILY, Stock.S_REMOTE_CNT, _0B);
     put.add(Const.TEXT_FAMILY, Stock.S_DATA, data());
 
-    put(put, Stock.TABLE);
+    put(put, stable);
 
     ++iid;
     if (iid >= POP_TOTAL_ID) {

@@ -7,6 +7,8 @@ import ict.wde.hbase.tpcc.table.Item;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -14,9 +16,10 @@ public class ItemPop extends DataPopulation {
 
   static final long POP_TOTAL_ID = 100000;
   private int id = 0;
+  private HTableInterface itable;
 
-  public ItemPop(Configuration connection) {
-    super(connection);
+  public ItemPop(Configuration conf) throws IOException {
+    itable = new HTable(conf, Item.TABLE);
   }
 
   private byte[] data() {
@@ -43,7 +46,10 @@ public class ItemPop extends DataPopulation {
 
   @Override
   public int popOneRow() throws IOException {
-    if (id >= POP_TOTAL_ID) return 0;
+    if (id >= POP_TOTAL_ID) {
+      itable.close();
+      return 0;
+    }
     byte[] i_id = Item.toRowkey(id);
     Put put = new Put(i_id);
     put.add(Const.ID_FAMILY, Item.I_ID, i_id);
@@ -51,7 +57,7 @@ public class ItemPop extends DataPopulation {
     put.add(Const.TEXT_FAMILY, Item.I_NAME, name());
     put.add(Const.TEXT_FAMILY, Item.I_DATA, data());
     put.add(Const.NUMERIC_FAMILY, Item.I_PRICE, price());
-    put(put, Item.TABLE);
+    put(put, itable);
     ++id;
     return 1;
   }

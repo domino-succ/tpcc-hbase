@@ -10,13 +10,25 @@ import ict.wde.hbase.tpcc.table.Warehouse;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class CustomerPop extends DataPopulation {
 
-  public CustomerPop(Configuration connection) {
-    super(connection);
+  private HTableInterface ctable;
+  private HTableInterface cidxtable;
+  private HTableInterface htable;
+
+  public CustomerPop(Configuration conf) throws IOException {
+    super();
+    ctable = new HTable(conf, Customer.TABLE);
+    ctable.setAutoFlush(false);
+    cidxtable = new HTable(conf, Customer.TABLE_INDEX_LAST);
+    cidxtable.setAutoFlush(false);
+    htable = new HTable(conf, History.TABLE);
+    htable.setAutoFlush(false);
   }
 
   private int wid = POP_W_FROM;
@@ -28,6 +40,9 @@ public class CustomerPop extends DataPopulation {
   @Override
   public int popOneRow() throws IOException {
     if (wid > POP_W_TO && did >= DistrictPop.POP_TOTAL_ID && id >= POP_TOTAL_ID) {
+      ctable.close();
+      htable.close();
+      cidxtable.close();
       return 0;
     }
     byte[] w_id = Warehouse.toRowkey(wid);
@@ -67,7 +82,7 @@ public class CustomerPop extends DataPopulation {
     put.add(Const.TEXT_FAMILY, History.H_DATA, hdata());
     put.add(Const.NUMERIC_FAMILY, History.H_DATE, time);
     put.add(Const.NUMERIC_FAMILY, History.H_AMOUNT, AMOUNT0);
-    put(put, History.TABLE);
+    put(put, htable);
   }
 
   static final byte[] AMOUNT0 = Bytes.toBytes(1000L);
@@ -81,7 +96,7 @@ public class CustomerPop extends DataPopulation {
     byte[] indexRow = Customer.toLastIndexRowkey(w_id, d_id, last, first);
     Put put = new Put(indexRow);
     put.add(Const.TEXT_FAMILY, c_id, row);
-    put(put, Customer.TABLE_INDEX_LAST);
+    put(put, cidxtable);
   }
 
   private void writeCustomerTable(byte[] w_id, byte[] d_id, byte[] c_id,
@@ -109,7 +124,7 @@ public class CustomerPop extends DataPopulation {
     put.add(Const.NUMERIC_FAMILY, Customer.C_DELIVERY_CNT, DELIVERY0);
     put.add(Const.TEXT_FAMILY, Customer.C_DATA, data());
 
-    put(put, Customer.TABLE);
+    put(put, ctable);
   }
 
   private byte[] data() {

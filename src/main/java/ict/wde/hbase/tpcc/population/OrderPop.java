@@ -18,9 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class OrderPop extends DataPopulation {
@@ -32,12 +30,20 @@ public class OrderPop extends DataPopulation {
   private int did = 0;
   private int id = 0;
   private List<byte[]> cids = new ArrayList<byte[]>(3000);
+  private HTableInterface notable;
+  private HTableInterface oltable;
+  private HTableInterface ocitable;
+  private HTableInterface otable;
 
-  public OrderPop(Configuration connection) {
-    super(connection);
+
+  public OrderPop(Configuration conf) throws IOException {
     for (int i = 0; i < 3000; ++i) {
       cids.add(Customer.toCid(i));
     }
+    notable = new HTable(conf, NewOrder.TABLE);
+    oltable = new HTable(conf, OrderLine.TABLE);
+    ocitable = new HTable(conf, Order.TABLE_CUSTOMER_INDEX);
+    otable = new HTable(conf, Order.TABLE);
     Collections.shuffle(cids);
     System.out.println("Poping order data from w: " + POP_W_FROM + "-"
         + POP_W_TO);
@@ -46,6 +52,10 @@ public class OrderPop extends DataPopulation {
   @Override
   public int popOneRow() throws IOException {
     if (wid > POP_W_TO && did >= DistrictPop.POP_TOTAL_ID && id >= POP_TOTAL_ID) {
+      ocitable.close();
+      otable.close();
+      notable.close();
+      oltable.close();
       return 0;
     }
     byte[] w_id = Warehouse.toRowkey(wid);
@@ -86,7 +96,7 @@ public class OrderPop extends DataPopulation {
     put.add(Const.ID_FAMILY, NewOrder.NO_O_ID, o_id);
     put.add(Const.ID_FAMILY, NewOrder.NO_D_ID, d_id);
     put.add(Const.ID_FAMILY, NewOrder.NO_W_ID, w_id);
-    put(put, NewOrder.TABLE);
+    put(put, notable);
   }
 
   private void writeOrderLineTable(byte[] w_id, byte[] d_id, byte[] o_id,
@@ -105,7 +115,7 @@ public class OrderPop extends DataPopulation {
       put.add(Const.NUMERIC_FAMILY, OrderLine.OL_QUANTITY, QUANTITY0);
       put.add(Const.NUMERIC_FAMILY, OrderLine.OL_AMOUNT, amount());
       put.add(Const.TEXT_FAMILY, OrderLine.OL_DIST_INFO, distinfo());
-      put(put, OrderLine.TABLE);
+      put(put, oltable);
     }
   }
 
@@ -136,7 +146,7 @@ public class OrderPop extends DataPopulation {
     byte[] indexRow = Order.toCustomerIndexRowkey(w_id, d_id, c_id, id);
     Put put = new Put(indexRow);
     put.add(Const.TEXT_FAMILY, Const.INDEX_ROW_QUALIFIER, row);
-    put(put, Order.TABLE_CUSTOMER_INDEX);
+    put(put, ocitable);
   }
 
   private void writeOrderTable(byte[] w_id, byte[] d_id, byte[] o_id,
@@ -150,7 +160,7 @@ public class OrderPop extends DataPopulation {
     put.add(Const.TEXT_FAMILY, Order.O_CARRIER_ID, carrierid());
     put.add(Const.NUMERIC_FAMILY, Order.O_OL_CNT, ol_cnt);
     put.add(Const.NUMERIC_FAMILY, Order.O_ALL_LOCAL, ALLLOCAL0);
-    put(put, Order.TABLE);
+    put(put, otable);
   }
 
   private static final byte[] ALLLOCAL0 = Bytes.toBytes(1L);

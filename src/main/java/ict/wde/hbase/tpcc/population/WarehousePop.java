@@ -7,6 +7,8 @@ import ict.wde.hbase.tpcc.table.Warehouse;
 import java.io.IOException;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.HTableInterface;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -14,9 +16,10 @@ public class WarehousePop extends DataPopulation {
 
   static final byte[] YTD0 = Bytes.toBytes(30000000L);
   private int id = POP_W_FROM;
+  private HTableInterface wtable;
 
-  public WarehousePop(Configuration connection) {
-    super(connection);
+  public WarehousePop(Configuration conf) throws IOException {
+    wtable = new HTable(conf, Warehouse.TABLE);
   }
 
   private byte[] name() {
@@ -45,7 +48,10 @@ public class WarehousePop extends DataPopulation {
 
   @Override
   public int popOneRow() throws IOException {
-    if (id > POP_W_TO) return 0;
+    if (id > POP_W_TO) {
+      wtable.close();
+      return 0;
+    }
     byte[] w_id = Warehouse.toRowkey(id);
     Put put = new Put(w_id);
     put.add(Const.ID_FAMILY, Warehouse.W_ID, w_id);
@@ -57,7 +63,7 @@ public class WarehousePop extends DataPopulation {
     put.add(Const.TEXT_FAMILY, Warehouse.W_ZIP, Utils.randomZip());
     put.add(Const.NUMERIC_FAMILY, Warehouse.W_TAX, tax());
     put.add(Const.NUMERIC_FAMILY, Warehouse.W_YTD, YTD0);
-    put(put, Warehouse.TABLE);
+    put(put, wtable);
     ++id;
     return 1;
   }
