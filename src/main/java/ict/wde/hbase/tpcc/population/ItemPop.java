@@ -5,11 +5,11 @@ import ict.wde.hbase.tpcc.Utils;
 import ict.wde.hbase.tpcc.table.Item;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
 
+import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class ItemPop extends DataPopulation {
@@ -20,6 +20,12 @@ public class ItemPop extends DataPopulation {
 
   public ItemPop(Configuration conf) throws IOException {
     itable = new HTable(conf, Item.TABLE);
+  }
+
+  public ItemPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
+    HConnection conn = HConnectionManager.createConnection(conf);
+    itable = new HTable(Item.TABLE, conn, pool);
+    itable.setAutoFlush(false);
   }
 
   private byte[] data() {

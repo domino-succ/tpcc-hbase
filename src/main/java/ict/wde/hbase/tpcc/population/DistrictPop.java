@@ -6,11 +6,10 @@ import ict.wde.hbase.tpcc.table.District;
 import ict.wde.hbase.tpcc.table.Warehouse;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class DistrictPop extends DataPopulation {
@@ -24,6 +23,11 @@ public class DistrictPop extends DataPopulation {
     dtable = new HTable(conf, District.TABLE);
   }
 
+  public DistrictPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
+    HConnection conn = HConnectionManager.createConnection(conf);
+    dtable = new HTable(District.TABLE, conn, pool);
+    dtable.setAutoFlush(false);
+  }
   @Override
   public int popOneRow() throws IOException {
     if (wid > POP_W_TO && did >= POP_TOTAL_ID) {

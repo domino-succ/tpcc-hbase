@@ -8,11 +8,10 @@ import ict.wde.hbase.tpcc.table.History;
 import ict.wde.hbase.tpcc.table.Warehouse;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class CustomerPop extends DataPopulation {
@@ -22,12 +21,23 @@ public class CustomerPop extends DataPopulation {
   private HTableInterface htable;
 
   public CustomerPop(Configuration conf) throws IOException {
-    super();
     ctable = new HTable(conf, Customer.TABLE);
     ctable.setAutoFlush(false);
     cidxtable = new HTable(conf, Customer.TABLE_INDEX_LAST);
     cidxtable.setAutoFlush(false);
     htable = new HTable(conf, History.TABLE);
+    htable.setAutoFlush(false);
+  }
+
+  public CustomerPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
+    HConnection conn = HConnectionManager.createConnection(conf);
+    ctable = new HTable(Customer.TABLE, conn, pool);
+    ctable.setAutoFlush(false);
+    conn = HConnectionManager.createConnection(conf);
+    cidxtable = new HTable(Customer.TABLE_INDEX_LAST, conn, pool);
+    cidxtable.setAutoFlush(false);
+    conn = HConnectionManager.createConnection(conf);
+    htable = new HTable(History.TABLE, conn, pool);
     htable.setAutoFlush(false);
   }
 

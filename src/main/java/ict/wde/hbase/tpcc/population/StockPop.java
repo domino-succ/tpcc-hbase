@@ -7,11 +7,10 @@ import ict.wde.hbase.tpcc.table.Stock;
 import ict.wde.hbase.tpcc.table.Warehouse;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class StockPop extends DataPopulation {
@@ -23,6 +22,12 @@ public class StockPop extends DataPopulation {
 
   public StockPop(Configuration conf) throws IOException {
     stable = new HTable(conf, Stock.TABLE);
+  }
+
+  public StockPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
+    HConnection conn = HConnectionManager.createConnection(conf);
+    stable = new HTable(Stock.TABLE, conn, pool);
+    stable.setAutoFlush(false);
   }
 
   @Override

@@ -2,14 +2,14 @@ package ict.wde.hbase.tpcc.population;
 
 import ict.wde.hbase.tpcc.Const;
 import ict.wde.hbase.tpcc.Utils;
+import ict.wde.hbase.tpcc.table.Item;
 import ict.wde.hbase.tpcc.table.Warehouse;
 
 import java.io.IOException;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.client.HTable;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 public class WarehousePop extends DataPopulation {
@@ -20,6 +20,12 @@ public class WarehousePop extends DataPopulation {
 
   public WarehousePop(Configuration conf) throws IOException {
     wtable = new HTable(conf, Warehouse.TABLE);
+  }
+
+  public WarehousePop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
+    HConnection conn = HConnectionManager.createConnection(conf);
+    wtable = new HTable(Warehouse.TABLE, conn, pool);
+    wtable.setAutoFlush(false);
   }
 
   private byte[] name() {
