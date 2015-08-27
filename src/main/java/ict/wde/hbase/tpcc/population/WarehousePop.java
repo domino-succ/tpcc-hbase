@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -18,13 +19,9 @@ public class WarehousePop extends DataPopulation {
   private int id = POP_W_FROM;
   private HTableInterface wtable;
 
-  public WarehousePop(Configuration conf) throws IOException {
+  public WarehousePop(Configuration conf, int id) throws IOException {
+    conf.set(HConstants.HBASE_CLIENT_INSTANCE_ID, id + "");
     wtable = new HTable(conf, Warehouse.TABLE);
-  }
-
-  public WarehousePop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
-    HConnection conn = HConnectionManager.createConnection(conf);
-    wtable = new HTable(Warehouse.TABLE, conn, pool);
     wtable.setAutoFlush(false);
   }
 

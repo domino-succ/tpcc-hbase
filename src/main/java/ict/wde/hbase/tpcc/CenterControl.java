@@ -8,4 +8,6 @@ public interface CenterControl extends VersionedProtocol {
   
   public void reportSummary(String summary);
 
+  public void report(StatItem[] s);
+
 }

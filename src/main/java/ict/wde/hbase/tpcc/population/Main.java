@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.util.Threads;
 
 public class Main {
 
@@ -36,31 +36,27 @@ public class Main {
 
   private static void initTablePopulation(String chars, Configuration config) throws IOException {
     Set<Character> hash = new HashSet<Character>();
-    ThreadPoolExecutor pool = new ThreadPoolExecutor(1, Integer.MAX_VALUE,
-            60, TimeUnit.SECONDS,
-            new SynchronousQueue<Runnable>(),
-            Threads.newDaemonThreadFactory("amos-table")); // a cached pool with my name
-    pool.allowCoreThreadTimeOut(true);
     for (char c : chars.toCharArray()) {
+      int id = 0;
       if (hash.contains(c)) continue;
       switch (c) {
       case 'i':
-        tables.add(new ItemPop(config, pool));
+        tables.add(new ItemPop(config, id ++));
         break;
       case 'w':
-        tables.add(new WarehousePop(config, pool));
+        tables.add(new WarehousePop(config, id ++));
         break;
       case 's':
-        tables.add(new StockPop(config, pool));
+        tables.add(new StockPop(config, id ++));
         break;
       case 'd':
-        tables.add(new DistrictPop(config, pool));
+        tables.add(new DistrictPop(config, id ++));
         break;
       case 'c':
-        tables.add(new CustomerPop(config, pool));
+        tables.add(new CustomerPop(config, id ++));
         break;
       case 'o':
-        tables.add(new OrderPop(config, pool));
+        tables.add(new OrderPop(config, id ++));
         break;
       default:
         continue;

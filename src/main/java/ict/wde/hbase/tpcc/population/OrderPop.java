@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -37,10 +38,11 @@ public class OrderPop extends DataPopulation {
   private HTableInterface otable;
 
 
-  public OrderPop(Configuration conf) throws IOException {
+  public OrderPop(Configuration conf, int id) throws IOException {
     for (int i = 0; i < 3000; ++i) {
       cids.add(Customer.toCid(i));
     }
+    conf.set(HConstants.HBASE_CLIENT_INSTANCE_ID, id + "");
     notable = new HTable(conf, NewOrder.TABLE);
     oltable = new HTable(conf, OrderLine.TABLE);
     ocitable = new HTable(conf, Order.TABLE_CUSTOMER_INDEX);

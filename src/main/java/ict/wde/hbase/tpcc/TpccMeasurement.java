@@ -45,20 +45,24 @@ public class TpccMeasurement implements CenterControl {
   @Override
   public void reportMessage(String message) {
     String[] messageParts = message.split("\n");
-    char t_type = messageParts[0].charAt(0);
-    if (t_type == TpccTransaction.DELIVERY) {
+//    char t_type = messageParts[0].charAt(0);
+//    if (t_type == TpccTransaction.DELIVERY) {
       String delivery_msg = messageParts[1];
       delivery.enqueue(new DeliveryRequest(delivery_msg));
-    }
+//    }
   }
 
   @Override
   public void reportSummary(String summary) {
     String[] m = summary.split(" ");
     statistics.stat(m[0].charAt(0), Long.parseLong(m[1]), Long.parseLong(m[2]),
-        Long.parseLong(m[3]), Long.parseLong(m[4]));
+            Long.parseLong(m[3]), Long.parseLong(m[4]));
   }
 
+  @Override
+  public void report(StatItem[] s) {
+    statistics.merge(s);
+  }
   private void startTiming() {
     statistics.startTiming();
   }
@@ -79,20 +83,6 @@ public class TpccMeasurement implements CenterControl {
       }
     }.start();
   }
-
-  // private static void startTerminals() {
-  // ProcessContact[][] pc = new ProcessContact[Const.W][10];
-  // for (int w = 0; w < Const.W; ++w) {
-  // for (int d = 0; d < 10; ++d) {
-  // pc[w][d] = new ProcessContact(w, d);
-  // }
-  // }
-  // for (int w = 0; w < Const.W; ++w) {
-  // for (int d = 0; d < 10; ++d) {
-  // pc[w][d].start();
-  // }
-  // }
-  // }
 
   private void openConnection() throws IOException {
     connection = new DominoDriver().getConnection(zkAddr);
@@ -119,7 +109,7 @@ public class TpccMeasurement implements CenterControl {
 
   private static void startService(TpccMeasurement instance) throws IOException {
     String[] addr = rpcAddr.split(":");
-    RPC.getServer(instance, addr[0], Integer.parseInt(addr[1]),
+    RPC.getServer(instance, addr[0], Integer.parseInt(addr[1]), 10, false,
         new Configuration()).start();
   }
 
@@ -185,78 +175,6 @@ public class TpccMeasurement implements CenterControl {
       }
     }
   }
-
-  // static class ProcessContact extends Thread {
-  //
-  // static final String TERMINAL_CLASS = "ict.wde.hbase.tpcc.Terminal";
-  //
-  // final int w_id;
-  // final int sl_d_id;
-  // final ProcessBuilder builder;
-  //
-  // ProcessContact(int w_id, int sl_d_id) {
-  // this.w_id = w_id;
-  // this.sl_d_id = sl_d_id;
-  // builder = new ProcessBuilder("java");
-  // }
-  //
-  // void initBuilder() {
-  // Properties props = System.getProperties();
-  // for (Object key : props.keySet()) {
-  // builder.command().add(
-  // String.format("-D%s=%s", key.toString(), props.get(key)));
-  // }
-  // builder.command().add(String.format("-DC_C_LAST=%d", Const.C_C_LAST_RUN));
-  // builder.command().add(String.format("-DC_C_ID=%d", Const.C_C_ID_RUN));
-  // builder.command().add(
-  // String.format("-DC_OL_I_ID=%d", Const.C_OL_I_ID_RUN));
-  // builder.command().add(TERMINAL_CLASS);
-  // builder.command().add(Integer.toString(w_id));
-  // builder.command().add(Integer.toString(sl_d_id));
-  // builder.command().add(zkAddr);
-  // builder.command().add(
-  // String.format("%s/%05d-%02d.log", outputPath, w_id, sl_d_id));
-  // builder.redirectError(new File(String.format("%s/%05d-%02d.err",
-  // outputPath, w_id, sl_d_id)));
-  // builder.redirectOutput(Redirect.PIPE);
-  // }
-  //
-  // public void run() {
-  // Process child = null;
-  // try {
-  // child = builder.start();
-  // }
-  // catch (IOException ioe) {
-  // ioe.printStackTrace();
-  // return;
-  // }
-  // BufferedReader reader = new BufferedReader(new InputStreamReader(
-  // child.getInputStream()));
-  // String message;
-  // try {
-  // while ((message = reader.readLine()) != null) {
-  // char t_type = message.charAt(0);
-  // if (t_type == TpccTransaction.DELIVERY) {
-  // String delivery_msg = reader.readLine();
-  // delivery.enqueue(new DeliveryRequest(delivery_msg));
-  // }
-  // summary(t_type, reader.readLine());
-  // }
-  // }
-  // catch (Throwable t) {
-  // System.err.println(String.format("Process %05d-%02d got an error: ",
-  // w_id, sl_d_id));
-  // t.printStackTrace();
-  // }
-  // finally {
-  // try {
-  // reader.close();
-  // }
-  // catch (IOException e) {
-  // }
-  // }
-  // }
-  // }
 
   static class DeliveryRequest {
     final int w_id;

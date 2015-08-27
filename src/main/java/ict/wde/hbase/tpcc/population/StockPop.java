@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -20,13 +21,9 @@ public class StockPop extends DataPopulation {
   private int iid = 0;
   private HTableInterface stable;
 
-  public StockPop(Configuration conf) throws IOException {
+  public StockPop(Configuration conf, int id) throws IOException {
+    conf.set(HConstants.HBASE_CLIENT_INSTANCE_ID, id + "");
     stable = new HTable(conf, Stock.TABLE);
-  }
-
-  public StockPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
-    HConnection conn = HConnectionManager.createConnection(conf);
-    stable = new HTable(Stock.TABLE, conn, pool);
     stable.setAutoFlush(false);
   }
 

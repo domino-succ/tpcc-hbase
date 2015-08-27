@@ -2,10 +2,13 @@ package ict.wde.hbase.tpcc.domino;
 
 import ict.wde.domino.client.Domino;
 import ict.wde.domino.client.Transaction;
+import ict.wde.domino.common.DominoConst;
 import ict.wde.hbase.driver.HBaseConnection;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
@@ -22,6 +25,12 @@ public class DominoConnection implements HBaseConnection {
     domino = new Domino(addr);
   }
 
+  protected DominoConnection(String addr, int id) throws IOException {
+    Configuration config = new Configuration();
+    config.set(DominoConst.ZK_PROP, addr);
+    config.set(HConstants.HBASE_CLIENT_INSTANCE_ID, id + "");
+    domino = new Domino(config);
+  }
   @Override
   public void close() throws IOException {
     domino.close();

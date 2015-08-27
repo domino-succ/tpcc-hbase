@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -19,8 +20,10 @@ public class DistrictPop extends DataPopulation {
   private int did = 0;
   private HTableInterface dtable;
 
-  public DistrictPop(Configuration conf) throws IOException {
+  public DistrictPop(Configuration conf, int id) throws IOException {
+    conf.set(HConstants.HBASE_CLIENT_INSTANCE_ID, id + "");
     dtable = new HTable(conf, District.TABLE);
+
   }
 
   public DistrictPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
@@ -30,7 +33,7 @@ public class DistrictPop extends DataPopulation {
   }
   @Override
   public int popOneRow() throws IOException {
-    if (wid > POP_W_TO && did >= POP_TOTAL_ID) {
+    if (wid > POP_W_TO) {
       dtable.close();
       return 0;
     }
@@ -54,7 +57,6 @@ public class DistrictPop extends DataPopulation {
 
     ++did;
     if (did >= POP_TOTAL_ID) {
-      if (wid > POP_W_TO) return 0;
       ++wid;
       did = 0;
     }

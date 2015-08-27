@@ -9,6 +9,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.commons.httpclient.HttpConnectionManager;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -18,13 +19,9 @@ public class ItemPop extends DataPopulation {
   private int id = 0;
   private HTableInterface itable;
 
-  public ItemPop(Configuration conf) throws IOException {
+  public ItemPop(Configuration conf, int id) throws IOException {
+    conf.set(HConstants.HBASE_CLIENT_INSTANCE_ID, id + "");
     itable = new HTable(conf, Item.TABLE);
-  }
-
-  public ItemPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
-    HConnection conn = HConnectionManager.createConnection(conf);
-    itable = new HTable(Item.TABLE, conn, pool);
     itable.setAutoFlush(false);
   }
 
