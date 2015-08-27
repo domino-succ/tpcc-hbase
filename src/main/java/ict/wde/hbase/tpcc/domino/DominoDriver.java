@@ -12,4 +12,7 @@ public class DominoDriver implements HBaseDriver {
     return new DominoConnection(address);
   }
 
+  public HBaseConnection getConnection(String address, int id) throws IOException {
+    return new DominoConnection(address, id);
+  }
 }

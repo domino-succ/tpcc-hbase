@@ -18,19 +18,25 @@ import java.util.Collections;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.ipc.RPC;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 public class Terminal extends Thread {
 
+  private final int id;
   private final int w_id;
   private final int sl_d_id;
   private CenterControl center;
   private String outputPath;
   private HBaseConnection connection;
+  private Reporter r;
 
-  public Terminal(int w_id, int sl_d_id, String outputPath) {
+  public Terminal(int id, int w_id, int sl_d_id, String outputPath, Reporter r) {
+    this.id = id;
     this.w_id = w_id;
     this.sl_d_id = sl_d_id;
     this.outputPath = outputPath;
+    this.r = r;
   }
 
   public void run() {
@@ -40,9 +46,12 @@ public class Terminal extends Thread {
         long t1 = System.currentTimeMillis();
         TpccTransaction t = getTransaction();
         // Parent contact 1 (trasaction type & message)
-        System.out.println(sl_d_id + " - Before Executing: "
-            + t.getReportMessage());
-        center.reportMessage(t.getReportMessage());
+//        System.out.println(sl_d_id + " - Before Executing: "
+//            + t.getReportMessage());
+
+        if (t.getType() == TpccTransaction.DELIVERY) {
+          center.reportMessage(t.getReportMessage());
+        }
         long t2 = System.currentTimeMillis();
         t.waitForKeying();
         long t3 = System.currentTimeMillis();
@@ -50,7 +59,7 @@ public class Terminal extends Thread {
         if (output == null) {
           continue;
         }
-        output(output);
+        //output(output);
         long t4 = System.currentTimeMillis();
         t.waitForThinking();
         long t5 = System.currentTimeMillis();
@@ -69,10 +78,7 @@ public class Terminal extends Thread {
 
   private void tellParent(TpccTransaction t, long menuRT, long keyingTime,
       long txnRT, long thinkingTime) {
-    String message = String.format("%c %d %d %d %d", t.getType(), menuRT,
-        keyingTime, txnRT, thinkingTime);
-    System.out.println(sl_d_id + " - " + message);
-    center.reportSummary(message);
+    r.update(t.getType(), menuRT, keyingTime, txnRT, thinkingTime);
   }
 
   private void closeWriter() {
@@ -112,6 +118,7 @@ public class Terminal extends Thread {
 
   private void openConnection() throws IOException {
     connection = new DominoDriver().getConnection(zkAddr);
+//    connection = new DominoDriver().getConnection(zkAddr, id);// multi connection
     String[] addr = rpcAddr.split(":");
     center = (CenterControl) RPC.getProxy(CenterControl.class, 0L,
         new InetSocketAddress(addr[0], Integer.parseInt(addr[1])),
@@ -177,11 +184,20 @@ public class Terminal extends Thread {
 
   public static void main(String[] args) throws Exception {
     parseArgs(args);
-    for (int w = wRange[0]; w <= wRange[1]; ++w) {		
+//    Logger.getRootLogger().setLevel(Level.ERROR);
+    Reporter r = new Reporter(rpcAddr);
+    r.start();
+    for (int w = wRange[0]; w <= wRange[1]; ++w) {
       for (int d = 0; d < 10; ++d) {
-        Terminal t = new Terminal(w, d, String.format("%s/%d-%d.log",
-            outputDir, w, d));
+        Terminal t = new Terminal(w*10 + d, w, d, String.format("%s/%d-%d.log",
+            outputDir, w, d), r);
         t.start();
+      }
+    }
+    while(true) {
+      try {
+        sleep(Long.MAX_VALUE);
+      } catch (Exception e) {
       }
     }
   }

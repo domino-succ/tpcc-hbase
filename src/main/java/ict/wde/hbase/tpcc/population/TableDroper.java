@@ -10,7 +10,6 @@ import ict.wde.hbase.tpcc.domino.DominoDriver;
 public class TableDroper {
 
 	public static void main(String[] args) throws Exception {
-		// TODO Auto-generated method stub
 		if( args.length != 2) return;
 		String tableConf = args[0];
 	    String zkAddr = args[1];

@@ -45,7 +45,7 @@ public abstract class TpccTransaction {
       }
       catch (IOException e) {
         ++retryCount;
-        if (retryCount % 50 == 0) {
+        if (retryCount % 5 == 0) {
           System.err.println("Retry " + retryCount + ": " + e.toString());
         }
         try {
@@ -57,7 +57,7 @@ public abstract class TpccTransaction {
       }
       catch (Exception e) {
         ++retryCount;
-        if (retryCount % 50 == 0) {
+        if (retryCount % 5 == 0) {
           System.err.println("Retry " + retryCount + ": " + e.toString());
           e.printStackTrace();
         }
@@ -67,9 +67,9 @@ public abstract class TpccTransaction {
         catch (IOException ioe) {
           ioe.printStackTrace();
         }
-        Utils.sleep(Utils.random(5, 200));
+        Utils.sleep(Utils.random(1000, 2000));
       }
-      if (retryCount > 400) {
+      if (retryCount > 20) {
         return null;
       }
     }

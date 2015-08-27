@@ -16,8 +16,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -36,10 +38,11 @@ public class OrderPop extends DataPopulation {
   private HTableInterface otable;
 
 
-  public OrderPop(Configuration conf) throws IOException {
+  public OrderPop(Configuration conf, int id) throws IOException {
     for (int i = 0; i < 3000; ++i) {
       cids.add(Customer.toCid(i));
     }
+    conf.set(HConstants.HBASE_CLIENT_INSTANCE_ID, id + "");
     notable = new HTable(conf, NewOrder.TABLE);
     oltable = new HTable(conf, OrderLine.TABLE);
     ocitable = new HTable(conf, Order.TABLE_CUSTOMER_INDEX);
@@ -49,6 +52,26 @@ public class OrderPop extends DataPopulation {
         + POP_W_TO);
   }
 
+  public OrderPop(Configuration conf, ThreadPoolExecutor pool) throws IOException {
+    for (int i = 0; i < 3000; ++i) {
+      cids.add(Customer.toCid(i));
+    }
+    HConnection conn = HConnectionManager.createConnection(conf);
+    notable = new HTable(NewOrder.TABLE, conn, pool);
+    notable.setAutoFlush(false);
+    conn = HConnectionManager.createConnection(conf);
+    oltable = new HTable(OrderLine.TABLE, conn, pool);
+    oltable.setAutoFlush(false);
+    conn = HConnectionManager.createConnection(conf);
+    ocitable = new HTable(Order.TABLE_CUSTOMER_INDEX, conn, pool);
+    ocitable.setAutoFlush(false);
+    conn = HConnectionManager.createConnection(conf);
+    otable = new HTable(Order.TABLE, conn, pool);
+    otable.setAutoFlush(false);
+    Collections.shuffle(cids);
+    System.out.println("Poping order data from w: " + POP_W_FROM + "-"
+            + POP_W_TO);
+  }
   @Override
   public int popOneRow() throws IOException {
     if (wid > POP_W_TO && did >= DistrictPop.POP_TOTAL_ID && id >= POP_TOTAL_ID) {

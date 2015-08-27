@@ -37,25 +37,26 @@ public class Main {
   private static void initTablePopulation(String chars, Configuration config) throws IOException {
     Set<Character> hash = new HashSet<Character>();
     for (char c : chars.toCharArray()) {
+      int id = 0;
       if (hash.contains(c)) continue;
       switch (c) {
       case 'i':
-        tables.add(new ItemPop(config));
+        tables.add(new ItemPop(config, id ++));
         break;
       case 'w':
-        tables.add(new WarehousePop(config));
+        tables.add(new WarehousePop(config, id ++));
         break;
       case 's':
-        tables.add(new StockPop(config));
+        tables.add(new StockPop(config, id ++));
         break;
       case 'd':
-        tables.add(new DistrictPop(config));
+        tables.add(new DistrictPop(config, id ++));
         break;
       case 'c':
-        tables.add(new CustomerPop(config));
+        tables.add(new CustomerPop(config, id ++));
         break;
       case 'o':
-        tables.add(new OrderPop(config));
+        tables.add(new OrderPop(config, id ++));
         break;
       default:
         continue;
